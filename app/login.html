@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>QPizza – Staff login</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><strong>QPizza</strong><a href="order.html">Order</a><a href="checkout.html">Checkout</a><a href="login.html">Staff login</a><a href="delivery.html">Delivery</a></header>
+<main>
+  <h1>Staff login</h1>
+  <div class="card">
+    <label for="pin">Enter your 4-digit PIN</label>
+    <input id="pin" data-testid="pin" type="password" inputmode="numeric" autocomplete="off">
+    <button data-testid="submit-pin">Log in</button>
+    <button class="secondary" data-testid="reset-pin">Reset</button>
+    <div class="msg" data-testid="status" role="status"></div>
+    <div data-testid="dashboard" hidden><h2>Kitchen dashboard</h2><p>Welcome back!</p></div>
+    <p class="hint">Demo PIN: 1234</p>
+  </div>
+</main>
+<script>
+  // States: START → TRY_1 → TRY_2 → BLOCKED, and any non-blocked state → GRANTED on the correct PIN.
+  // A blocked account stays blocked, also after a page reload (state kept in localStorage).
+  const KEY = 'qpizza.pinState';
+  const CORRECT_PIN = '1234';
+  const MAX_ATTEMPTS = 3;
+  const $ = sel => document.querySelector(`[data-testid=${sel}]`);
+  const load = () => JSON.parse(localStorage.getItem(KEY) || '{"failed":0,"blocked":false}');
+  const save = s => localStorage.setItem(KEY, JSON.stringify(s));
+  function show(text, ok) { $('status').textContent = text; $('status').className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  if (load().blocked) show('Account blocked. Contact the helpdesk.', false);
+
+  $('submit-pin').addEventListener('click', () => {
+    const state = load();
+    const pin = $('pin').value;
+    $('pin').value = '';
+    if (state.blocked) return show('Account blocked. Contact the helpdesk.', false);
+    if (pin === CORRECT_PIN) {
+      save({ failed: 0, blocked: false });
+      $('dashboard').hidden = false;
+      return show('Access granted', true);
+    }
+    state.failed += 1;
+    if (state.failed >= MAX_ATTEMPTS) {
+      state.blocked = true;
+      save(state);
+      return show('Account blocked. Contact the helpdesk.', false);
+    }
+    save(state);
+    const left = MAX_ATTEMPTS - state.failed;
+    show(`Wrong PIN. ${left} attempt${left === 1 ? '' : 's'} left.`, false);
+  });
+
+  // Demo helper: wipe the stored PIN state so the account goes back to START.
+  $('reset-pin').addEventListener('click', () => {
+    localStorage.removeItem(KEY);
+    $('pin').value = '';
+    $('dashboard').hidden = true;
+    show('State reset. You can try again.', true);
+  });
+</script>
+</body>
+</html>

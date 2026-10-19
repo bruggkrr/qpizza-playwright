@@ -1,0 +1,8 @@
+{
+  "customer": "demo-customer-42",
+  "items": [
+    { "name": "Margherita", "price": 12.50, "qty": 2 },
+    { "name": "Quattro Formaggi", "price": 14.50, "qty": 2 }
+  ],
+  "shipping": 4.95
+}

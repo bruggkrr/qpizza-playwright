@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>QPizza – Order</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><strong>QPizza</strong><a href="order.html">Order</a><a href="checkout.html">Checkout</a><a href="login.html">Staff login</a><a href="delivery.html">Delivery</a></header>
+<main>
+  <h1>Order pizzas</h1>
+  <div class="card">
+    <label for="qty">How many pizzas? (1–10)</label>
+    <input id="qty" data-testid="qty" inputmode="numeric" autocomplete="off">
+    <button data-testid="add">Add to order</button>
+    <div class="msg" data-testid="message" role="status"></div>
+  </div>
+  <div class="card">
+    <button data-testid="place-order" disabled>Place order</button>
+    <div class="msg" data-testid="order-result" role="status"></div>
+  </div>
+</main>
+<script>
+  const qtyInput = document.querySelector('[data-testid=qty]');
+  const message = document.querySelector('[data-testid=message]');
+  const placeBtn = document.querySelector('[data-testid=place-order]');
+  const result = document.querySelector('[data-testid=order-result]');
+  let quantity = null;
+
+  function show(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  // Requirement: a customer can order 1 to 10 pizzas (whole numbers only).
+  document.querySelector('[data-testid=add]').addEventListener('click', () => {
+    const raw = qtyInput.value.trim();
+    quantity = null;
+    placeBtn.disabled = true;
+    if (!/^-?\d+$/.test(raw)) return show(message, 'Please enter a whole number.', false);
+    const qty = Number(raw);
+    if (qty < 1) return show(message, 'Please order at least 1 pizza.', false);
+    if (qty > 10) return show(message, 'You can order at most 10 pizzas.', false);
+    quantity = qty;
+    placeBtn.disabled = false;
+    show(message, `Great! ${qty} pizza(s) added to your order.`, true);
+  });
+
+  // Requirement: placing an order calls POST /api/orders. While it is pending the
+  // button is disabled (no double orders). On failure the customer gets a clear message.
+  placeBtn.addEventListener('click', async () => {
+    placeBtn.disabled = true;
+    placeBtn.textContent = 'Placing order…';
+    result.textContent = '';
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const body = await res.json();
+      show(result, `Order ${body.orderId} confirmed!`, true);
+      placeBtn.textContent = 'Order placed';
+    } catch (e) {
+      show(result, 'Something went wrong. Your order was not placed. Please try again.', false);
+      placeBtn.textContent = 'Place order';
+      placeBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

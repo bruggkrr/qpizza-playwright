@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>QPizza – Checkout</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><strong>QPizza</strong><a href="order.html">Order</a><a href="checkout.html">Checkout</a><a href="login.html">Staff login</a><a href="delivery.html">Delivery</a></header>
+<main>
+  <h1>Checkout</h1>
+  <div class="card">
+    <table>
+      <tr><td>Merchandise subtotal</td><td data-testid="subtotal">…</td></tr>
+      <tr><td>Discount</td><td data-testid="discount">€0.00</td></tr>
+      <tr><td>Shipping</td><td data-testid="shipping">…</td></tr>
+      <tr class="total"><td>Total</td><td data-testid="total">…</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <label for="promo">Promo code</label>
+    <input id="promo" data-testid="promo-code" autocomplete="off">
+    <button data-testid="apply-promo">Apply</button>
+    <div class="msg" data-testid="promo-message" role="status"></div>
+    <p class="hint">Customer: demo-customer-42</p>
+  </div>
+</main>
+<script>
+  // All money is handled in cents to avoid floating-point rounding errors.
+  const euro = cents => '€' + (cents / 100).toFixed(2);
+  const $ = sel => document.querySelector(`[data-testid=${sel}]`);
+  let subtotal = 0, shipping = 0, discount = 0;
+
+  function render() {
+    $('subtotal').textContent = euro(subtotal);
+    $('discount').textContent = discount ? '−' + euro(discount) : '€0.00';
+    $('shipping').textContent = euro(shipping);
+    $('total').textContent = euro(subtotal - discount + shipping);
+  }
+  function show(text, ok) { $('promo-message').textContent = text; $('promo-message').className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  fetch('/api/cart/current.json')
+    .then(r => r.json())
+    .then(cart => {
+      subtotal = cart.items.reduce((sum, i) => sum + Math.round(i.price * 100) * i.qty, 0);
+      shipping = Math.round(cart.shipping * 100);
+      render();
+    });
+
+  // Business rules for SAVE10:
+  // 1. The code must be active and not expired.
+  // 2. The customer must not have used the code before.
+  // 3. The merchandise subtotal must be at least €50.
+  // 4. The 10% discount applies to merchandise only; shipping is excluded.
+  $('apply-promo').addEventListener('click', async () => {
+    discount = 0;
+    const code = $('promo-code').value.trim().toUpperCase();
+    if (!code) { render(); return show('Please enter a promo code.', false); }
+    const res = await fetch(`/api/promo/${encodeURIComponent(code)}.json?customer=demo-customer-42`);
+    if (!res.ok) { render(); return show('This code is not valid.', false); }
+    const promo = await res.json();
+    const expired = new Date(promo.expiresAt) < new Date();
+    if (!promo.active || expired) show('This code is not valid or has expired.', false);
+    else if (promo.usedByCustomer) show('You have already used this code.', false);
+    else if (subtotal < 5000) show('SAVE10 requires a merchandise subtotal of at least €50.00.', false);
+    else { discount = Math.round(subtotal * 0.10); show('SAVE10 applied: 10% off your merchandise.', true); }
+    render();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>QPizza – Delivery check</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><strong>QPizza</strong><a href="order.html">Order</a><a href="checkout.html">Checkout</a><a href="login.html">Staff login</a><a href="delivery.html">Delivery</a></header>
+<main>
+  <h1>Can we deliver to you?</h1>
+  <div class="card">
+    <label for="postcode">Postcode</label>
+    <input id="postcode" data-testid="postcode" inputmode="numeric" autocomplete="off">
+    <label for="total">Order total (€)</label>
+    <input id="total" data-testid="order-total" inputmode="decimal" autocomplete="off">
+    <button data-testid="check">Check delivery</button>
+    <div class="msg" data-testid="delivery-result" role="status"></div>
+  </div>
+</main>
+<script>
+  const $ = sel => document.querySelector(`[data-testid=${sel}]`);
+  function show(text, ok) { $('delivery-result').textContent = text; $('delivery-result').className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  $('check').addEventListener('click', () => {
+    const postcode = $('postcode').value.trim();
+    const total = Number($('order-total').value.replace(',', '.'));
+    if (!/^\d{4}$/.test(postcode)) return show('Please enter a valid Belgian postcode.', false);
+    const pc = Number(postcode);
+    if (!(pc >= 2000 && pc < 2660)) return show(`Sorry, we don't deliver to ${postcode} yet.`, false);
+    if (total > 25) return show(`We deliver to ${postcode}! Free delivery`, true);
+    return show(`We deliver to ${postcode}! Delivery fee: €3.50`, true);
+  });
+</script>
+</body>
+</html>
