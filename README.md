@@ -5,8 +5,18 @@ QPizza is a **fictional** pizza shop, built only to practise test design. No rea
 
 ## Setup (do this before the lecture – ±10 minutes)
 
-1. Install **Node.js 20 or newer** (https://nodejs.org – choose the LTS version).
-2. Unzip this folder, open a terminal in it and run:
+1. Install:
+   - **Node.js 20 or newer** (https://nodejs.org – choose the LTS version)
+   - **Git** (https://git-scm.com/downloads – on macOS, running `git --version` in a terminal offers to install it)
+2. Open a terminal, go to the folder where you keep your projects, and get the code:
+
+   ```bash
+   git clone https://github.com/bruggkrr/qpizza-playwright.git
+   cd qpizza-playwright
+   ```
+
+   No Git? On the GitHub page, click **Code → Download ZIP**, unzip it and open a terminal in that folder.
+3. Install the dependencies and the browser:
 
    ```bash
    npm install
@@ -14,7 +24,7 @@ QPizza is a **fictional** pizza shop, built only to practise test design. No rea
    ```
 
    The second command downloads the browser Playwright uses (±150 MB). Do it at home or on a fast network.
-3. Check that it works:
+4. Check that it works:
 
    ```bash
    npm test
